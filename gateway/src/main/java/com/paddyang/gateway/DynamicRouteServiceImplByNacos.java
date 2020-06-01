@@ -6,6 +6,7 @@ import com.alibaba.nacos.api.config.ConfigService;
 import com.alibaba.nacos.api.config.listener.Listener;
 import com.alibaba.nacos.api.exception.NacosException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.route.RouteDefinition;
 import org.springframework.stereotype.Component;
 
@@ -26,7 +27,7 @@ public class DynamicRouteServiceImplByNacos {
      */
     public void dynamicRouteByNacosListener (String dataId, String group){
         try {
-            ConfigService configService= NacosFactory.createConfigService("121.196.59.238:8848");
+            ConfigService configService= NacosFactory.createConfigService("101.201.144.206:8848");
             String content = configService.getConfig(dataId, group, 5000);
             System.out.println(content);
             configService.addListener(dataId, group, new Listener()  {
@@ -45,6 +46,7 @@ public class DynamicRouteServiceImplByNacos {
             });
         } catch (NacosException e) {
             //todo 提醒:异常自行处理此处省略
+            e.printStackTrace();
         }
     }
 }
