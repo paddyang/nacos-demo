@@ -6,29 +6,47 @@ import com.alibaba.nacos.api.config.ConfigService;
 import com.alibaba.nacos.api.config.listener.Listener;
 import com.alibaba.nacos.api.exception.NacosException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.route.RouteDefinition;
+import org.springframework.core.env.Environment;
+import org.springframework.core.io.support.PropertiesLoaderUtils;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
 import java.util.List;
+import java.util.Properties;
 import java.util.concurrent.Executor;
 
 @Component
 public class DynamicRouteServiceImplByNacos {
+
     @Autowired
     private DynamicRouteServiceImpl dynamicRouteService;
+
+    @Autowired
+    private Environment env;
+
     public DynamicRouteServiceImplByNacos() {
-        dynamicRouteByNacosListener("gateway","gateway_route");
+        try {
+            Properties  properties = PropertiesLoaderUtils.loadAllProperties("conf.properties");
+            String serverAddr = properties.getProperty("nacos.config.server-addr");
+            String dataId = properties.getProperty("nacos.config.dataId");
+            String group = properties.getProperty("nacos.config.group");
+            long timeoutMs = Long.parseLong(properties.getProperty("nacos.config.timeoutMs"));
+            dynamicRouteByNacosListener(dataId,group,serverAddr,timeoutMs);
+        } catch (IOException e) {
+            throw new RuntimeException("获取配置文件---conf.properties---失败");
+        }
+
     }
     /**
      * 监听Nacos Server下发的动态路由配置
      * @param dataId
      * @param group
      */
-    public void dynamicRouteByNacosListener (String dataId, String group){
+    public void dynamicRouteByNacosListener (String dataId, String group,String serverAddr,long timeoutMs){
         try {
-            ConfigService configService= NacosFactory.createConfigService("101.201.144.206:8848");
-            String content = configService.getConfig(dataId, group, 5000);
+            ConfigService configService= NacosFactory.createConfigService(serverAddr);
+            String content = configService.getConfig(dataId, group, timeoutMs);
             System.out.println(content);
             configService.addListener(dataId, group, new Listener()  {
                 @Override
